@@ -1,5 +1,5 @@
 // =============================================================================
-// HireTrack AI — Prisma Schema (MVP Minimum Data Model)
+// HireTrack AI — Prisma Schema (MVP Minimum Data Model with Auth Foundation)
 // =============================================================================
 
 generator client {
@@ -50,16 +50,74 @@ model User {
   passwordHash  String?   @map("password_hash") @db.VarChar(255)
   role          Role      @default(VIEWER)
   emailVerified DateTime? @map("email_verified") @db.Timestamptz
+  image         String?   @db.Text
   createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz
   updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz
 
-  // Relations
+  // Business Relations
   jobs          Job[]          @relation("UserJobs")
   notes         CandidateNote[] @relation("UserNotes")
   activityLogs  ActivityLog[]  @relation("UserLogs")
 
+  // Authentication Relations
+  accounts      Account[]
+  sessions      Session[]
+
   @@index([role])
   @@map("users")
+}
+
+model Account {
+  id                String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId            String  @map("user_id") @db.Uuid
+  type              String  @db.VarChar(50)
+  provider          String  @db.VarChar(50)
+  providerAccountId String  @map("provider_account_id") @db.VarChar(255)
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String? @db.VarChar(50)
+  scope             String? @db.VarChar(255)
+  id_token          String? @db.Text
+  session_state     String? @db.Text
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sessionToken String   @unique @map("session_token") @db.VarChar(255)
+  userId       String   @map("user_id") @db.Uuid
+  expires      DateTime @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String   @db.VarChar(255)
+  token      String   @unique @db.VarChar(255)
+  expires    DateTime @db.Timestamptz
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+model PasswordResetToken {
+  id      String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email   String   @db.VarChar(255)
+  token   String   @unique @db.VarChar(255)
+  expires DateTime @db.Timestamptz
+
+  @@unique([email, token])
+  @@index([email])
+  @@map("password_reset_tokens")
 }
 
 model Job {
