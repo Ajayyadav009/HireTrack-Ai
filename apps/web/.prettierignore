@@ -1,0 +1,9 @@
+# Prettier ignore — files and directories that should not be auto-formatted
+.next/
+node_modules/
+dist/
+build/
+out/
+public/
+pnpm-lock.yaml
+*.md

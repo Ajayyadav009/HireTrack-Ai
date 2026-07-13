@@ -1,0 +1,102 @@
+# =============================================================================
+# HireTrack AI — .gitignore
+# =============================================================================
+
+# ─── Dependencies ───────────────────────────────────────────────────────────
+node_modules/
+.pnp
+.pnp.js
+.yarn/install-state.gz
+
+# ─── Build Outputs ───────────────────────────────────────────────────────────
+dist/
+build/
+.next/
+out/
+.turbo/
+
+# ─── Environment Variables ───────────────────────────────────────────────────
+# NEVER commit .env files — use .env.example for documentation
+.env
+.env.local
+.env.development
+.env.development.local
+.env.test
+.env.test.local
+.env.staging
+.env.production
+.env.production.local
+
+# ─── TypeScript ──────────────────────────────────────────────────────────────
+*.tsbuildinfo
+next-env.d.ts
+
+# ─── Testing ─────────────────────────────────────────────────────────────────
+coverage/
+.nyc_output/
+test-results/
+playwright-report/
+playwright/.cache/
+
+# ─── Logs ────────────────────────────────────────────────────────────────────
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ─── Editor ──────────────────────────────────────────────────────────────────
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/launch.json
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ─── OS ──────────────────────────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# ─── Prisma ──────────────────────────────────────────────────────────────────
+# Keep schema.prisma tracked; ignore migration lock if desired
+# prisma/migrations/  ← intentionally tracked
+
+# ─── AWS / Cloud ─────────────────────────────────────────────────────────────
+.aws/
+*.pem
+*.key
+*.crt
+
+# ─── Certificates & Secrets ──────────────────────────────────────────────────
+*.p12
+*.pfx
+secrets/
+.secrets/
+
+# ─── Package Manager Lock Files ──────────────────────────────────────────────
+# pnpm-lock.yaml is intentionally TRACKED (ensures reproducible installs)
+# yarn.lock and package-lock.json should NOT exist in a pnpm workspace
+yarn.lock
+package-lock.json
+
+# ─── Sentry ──────────────────────────────────────────────────────────────────
+.sentryclirc
+
+# ─── Vercel ──────────────────────────────────────────────────────────────────
+.vercel
+
+# ─── Misc ────────────────────────────────────────────────────────────────────
+*.local
+.cache/
+tmp/
+temp/

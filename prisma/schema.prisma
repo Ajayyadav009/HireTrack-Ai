@@ -1,0 +1,170 @@
+// =============================================================================
+// HireTrack AI — Prisma Schema (MVP Minimum Data Model)
+// =============================================================================
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [pgcrypto, uuidOssp(map: "uuid-ossp")]
+}
+
+// =============================================================================
+// ENUMERATIONS
+// =============================================================================
+
+enum Role {
+  ADMIN
+  RECRUITER
+  VIEWER
+}
+
+enum JobStatus {
+  DRAFT
+  OPEN
+  CLOSED
+  ARCHIVED
+}
+
+enum ApplicationStatus {
+  APPLIED
+  SCREENING
+  INTERVIEW
+  OFFER
+  HIRED
+  REJECTED
+}
+
+// =============================================================================
+// MODELS
+// =============================================================================
+
+model User {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name          String    @db.VarChar(255)
+  email         String    @unique @db.VarChar(255)
+  passwordHash  String?   @map("password_hash") @db.VarChar(255)
+  role          Role      @default(VIEWER)
+  emailVerified DateTime? @map("email_verified") @db.Timestamptz
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  jobs          Job[]          @relation("UserJobs")
+  notes         CandidateNote[] @relation("UserNotes")
+  activityLogs  ActivityLog[]  @relation("UserLogs")
+
+  @@index([role])
+  @@map("users")
+}
+
+model Job {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title          String    @db.VarChar(255)
+  department     String?   @db.VarChar(255)
+  location       String?   @db.VarChar(255)
+  employmentType String?   @map("employment_type") @db.VarChar(100)
+  description    String?   @db.Text
+  status         JobStatus @default(DRAFT)
+  createdById    String    @map("created_by_id") @db.Uuid
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  deletedAt      DateTime? @map("deleted_at") @db.Timestamptz
+
+  // Relations
+  createdBy      User          @relation("UserJobs", fields: [createdById], references: [id], onDelete: Restrict)
+  applications   Application[] @relation("JobApplications")
+
+  @@index([createdById])
+  @@index([status])
+  @@index([createdAt])
+  @@index([deletedAt])
+  @@map("jobs")
+}
+
+model Candidate {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  firstName       String    @map("first_name") @db.VarChar(100)
+  lastName        String    @map("last_name") @db.VarChar(100)
+  email           String    @unique @db.VarChar(255)
+  phone           String?   @db.VarChar(50)
+  location        String?   @db.VarChar(255)
+  resumeUrl       String?   @map("resume_url") @db.Text
+  currentCompany  String?   @map("current_company") @db.VarChar(255)
+  currentTitle    String?   @map("current_title") @db.VarChar(255)
+  experienceYears Int?      @map("experience_years")
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  deletedAt       DateTime? @map("deleted_at") @db.Timestamptz
+
+  // Relations
+  applications    Application[]   @relation("CandidateApplications")
+  notes           CandidateNote[] @relation("CandidateNotes")
+
+  @@index([firstName, lastName])
+  @@index([email])
+  @@index([experienceYears])
+  @@index([createdAt])
+  @@index([deletedAt])
+  @@map("candidates")
+}
+
+model Application {
+  id          String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  candidateId String            @map("candidate_id") @db.Uuid
+  jobId       String            @map("job_id") @db.Uuid
+  status      ApplicationStatus @default(APPLIED)
+  appliedAt   DateTime          @default(now()) @map("applied_at") @db.Timestamptz
+  updatedAt   DateTime          @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  candidate   Candidate         @relation("CandidateApplications", fields: [candidateId], references: [id], onDelete: Cascade)
+  job         Job               @relation("JobApplications", fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@unique([candidateId, jobId])
+  @@index([candidateId])
+  @@index([jobId])
+  @@index([status])
+  @@index([appliedAt])
+  @@map("applications")
+}
+
+model CandidateNote {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  candidateId String   @map("candidate_id") @db.Uuid
+  authorId    String   @map("author_id") @db.Uuid
+  content     String   @db.Text
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  candidate   Candidate @relation("CandidateNotes", fields: [candidateId], references: [id], onDelete: Cascade)
+  author      User      @relation("UserNotes", fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([candidateId])
+  @@index([authorId])
+  @@index([createdAt])
+  @@map("candidate_notes")
+}
+
+model ActivityLog {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId     String?  @map("user_id") @db.Uuid
+  action     String   @db.VarChar(255)
+  entityType String   @map("entity_type") @db.VarChar(100)
+  entityId   String   @map("entity_id") @db.Uuid
+  metadata   Json?
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  // Relations
+  user       User?    @relation("UserLogs", fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("activity_logs")
+}
