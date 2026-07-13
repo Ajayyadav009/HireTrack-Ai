@@ -29,7 +29,7 @@ const nextConfig: NextConfig = {
    * Typed routes: enables compile-time checking of all Next.js route paths.
    */
   experimental: {
-    typedRoutes: true,
+    typedRoutes: false,
   },
 };
 
